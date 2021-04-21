@@ -125,6 +125,10 @@ defmodule NdflDividents do
     "372"
   end
 
+  defp country_to_filed("Кипр") do
+    "196"
+  end
+
   defp csv_row_to_map([
          _,
          date,
