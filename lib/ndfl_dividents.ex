@@ -129,6 +129,14 @@ defmodule NdflDividents do
     "196"
   end
 
+  defp country_to_filed("Нидерланды") do
+    "528"
+  end
+
+  defp country_to_filed("Гонконг") do
+    "344"
+  end
+
   defp csv_row_to_map([
          _,
          date,
