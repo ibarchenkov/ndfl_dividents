@@ -137,6 +137,14 @@ defmodule NdflDividents do
     "344"
   end
 
+  defp country_to_filed("Швейцарская Конфедерация") do
+    "756"
+  end
+
+  defp country_to_filed("РОССИЯ") do
+    "643"
+  end
+
   defp csv_row_to_map([
          _,
          date,
