@@ -1,6 +1,15 @@
 defmodule NdflDividents do
   use Hound.Helpers
-  @login_url "https://lkfl2.nalog.ru/lkfl/situations/3NDFL"
+  @login_url "https://lkfl2.nalog.ru/lkfl/login"
+
+  @country_to_code %{
+    "США" => "840",
+    "Ирландия" => "372",
+    "Кипр" => "196",
+    "Нидерланды" => "528",
+    "Гонконг" => "344",
+    "Швейцарская Конфедерация" => "756"
+  }
 
   def login do
     Hound.start_session()
@@ -117,32 +126,14 @@ defmodule NdflDividents do
     "840"
   end
 
-  defp country_to_filed("США") do
-    "840"
-  end
+  defp country_to_filed(country) do
+    case Map.get(@country_to_code, country) do
+      nil ->
+        raise "Добавьте страну `#{country}` в массив @country_to_code и отправьте, пожалуйста, PR"
 
-  defp country_to_filed("Ирландия") do
-    "372"
-  end
-
-  defp country_to_filed("Кипр") do
-    "196"
-  end
-
-  defp country_to_filed("Нидерланды") do
-    "528"
-  end
-
-  defp country_to_filed("Гонконг") do
-    "344"
-  end
-
-  defp country_to_filed("Швейцарская Конфедерация") do
-    "756"
-  end
-
-  defp country_to_filed("РОССИЯ") do
-    "643"
+      code ->
+        code
+    end
   end
 
   defp csv_row_to_map([
