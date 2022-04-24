@@ -1,5 +1,7 @@
 defmodule NdflDividents do
   use Hound.Helpers
+  alias NimbleCSV.RFC4180, as: CSV
+
   @login_url "https://lkfl2.nalog.ru/lkfl/login"
 
   @country_to_code %{
@@ -8,7 +10,8 @@ defmodule NdflDividents do
     "Кипр" => "196",
     "Нидерланды" => "528",
     "Гонконг" => "344",
-    "Швейцарская Конфедерация" => "756"
+    "Швейцарская Конфедерация" => "756",
+    "Китай" => "156"
   }
 
   def login do
@@ -34,9 +37,18 @@ defmodule NdflDividents do
   end
 
   defp parse_file(file_path) do
-    file_path
-    |> File.stream!(read_ahead: 1_000)
-    |> NimbleCSV.RFC4180.parse_stream(skip_headers: false)
+    stream = File.stream!(file_path, read_ahead: 1_000)
+
+    headers =
+      stream
+      |> CSV.parse_stream(skip_headers: false)
+      |> Enum.take(1)
+      |> hd()
+      |> Enum.map(fn header -> header |> String.downcase() |> String.trim_trailing("*") end)
+
+    stream
+    |> CSV.parse_stream(skip_headers: true)
+    |> Stream.map(fn row -> headers |> Enum.zip(row) |> Map.new() end)
     |> Stream.map(&csv_row_to_map/1)
     |> Stream.with_index()
     |> Enum.to_list()
@@ -46,7 +58,8 @@ defmodule NdflDividents do
     add_button =
       find_element(
         :class,
-        "src-modules-Taps-components-NDFL3-private-forms-IncomesForm-IncomesOutsideRFComponent-IncomeSources-IncomeSources-module__addButton"
+        # "src-modules-Taps-components-NDFL3-private-forms-IncomesForm-IncomesOutsideRFComponent-IncomeSources-IncomeSources-module__addButton"
+        "IncomeSources_addButton__1jhpg"
       )
 
     click(add_button)
@@ -111,7 +124,7 @@ defmodule NdflDividents do
   end
 
   defp fill_country(index, country) do
-    country_element = find_element(:id, income_element(index, "oksm"))
+    country_element = find_element(:id, income_element(index, "oksmIst"))
     click(country_element)
     country |> country_to_filed() |> send_text()
     send_keys(:enter)
@@ -136,45 +149,29 @@ defmodule NdflDividents do
     end
   end
 
-  defp csv_row_to_map([
-         _,
-         date,
-         _,
-         name,
-         _,
-         country,
-         amount_of_stocks,
-         money_per_stock,
-         _,
-         tax_paid_already,
-         _,
-         currency
-       ]) do
-    amount_of_stocks = String.to_integer(amount_of_stocks)
-
-    money_per_stock =
-      money_per_stock
-      |> String.replace(",", ".")
-      |> Decimal.new()
-
-    total_amount = amount_of_stocks |> Decimal.mult(money_per_stock) |> Decimal.to_string()
-
-    tax_paid_already = String.replace(tax_paid_already, ",", ".")
-
+  defp csv_row_to_map(%{
+         "дата выплаты" => date,
+         "наименование ценной бумаги" => name,
+         "страна эмитента" => country,
+         "валюта" => currency,
+         "сумма налога, удержанного агентом" => tax_paid_already,
+         "сумма до удержания налога" => total_amount
+       }) do
     %{
       date: date,
       name: name,
       country: country,
       currency: currency,
-      tax_paid_already: tax_paid_already,
-      total_amount: total_amount
+      tax_paid_already: String.replace(tax_paid_already, ",", "."),
+      total_amount: String.replace(total_amount, ",", ".")
     }
   end
 
   def toggle_expand_incomes(sleep) do
     find_all_elements(
       :class,
-      "src-modules-Taps-components-NDFL3-private-forms-IncomesForm-IncomesOutsideRFComponent-IncomeSources-IncomeSources-module__spoilerTitle"
+      # "src-modules-Taps-components-NDFL3-private-forms-IncomesForm-IncomesOutsideRFComponent-IncomeSources-IncomeSources-module__spoilerTitle"
+      "IncomeSources_incomeSourceSpoiler__2AMpN"
     )
     |> Enum.each(fn element ->
       click(element)
