@@ -11,7 +11,14 @@ defmodule NdflDividents do
     "Нидерланды" => "528",
     "Гонконг" => "344",
     "Швейцарская Конфедерация" => "756",
-    "Китай" => "156"
+    "Китай" => "156",
+    "КАЙМАН" => "136",
+    "Германия" => "276"
+  }
+
+  @currency_to_code %{
+    "USD" => "840",
+    "EUR" => "978"
   }
 
   def login do
@@ -135,8 +142,14 @@ defmodule NdflDividents do
     input_into_field(name_element, name)
   end
 
-  defp currency_to_filed("USD") do
-    "840"
+  defp currency_to_filed(currency) do
+    case Map.get(@currency_to_code, currency) do
+      nil ->
+        raise "Добавьте валюту `#{currency}` в массив @currency_to_code и отправьте, пожалуйста, PR"
+
+      code ->
+        code
+    end
   end
 
   defp country_to_filed(country) do
